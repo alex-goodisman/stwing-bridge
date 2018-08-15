@@ -1,0 +1,3 @@
+Discord4J: https://discord4j.com/
+Jetty: https://www.eclipse.org/jetty/
+JSON-java: https://github.com/stleary/JSON-java
