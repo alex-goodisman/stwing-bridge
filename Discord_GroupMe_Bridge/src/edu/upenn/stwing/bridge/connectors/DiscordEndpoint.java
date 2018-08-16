@@ -82,8 +82,11 @@ public class DiscordEndpoint implements BridgeEndpoint
 		//create a discord Listener object that responds to Discord Events
 		IListener<MessageReceivedEvent> listener = ev -> 
 		{
-			System.out.println("Receiving message from Discord");
-			response.accept(new Message(ev.getMessage().getAuthor().getDisplayName(ev.getGuild()), ev.getMessage().getContent()));
+			if(ev.getChannel().getLongID() == CHANNEL_ID)
+			{
+				System.out.println("Receiving message from Discord");
+				response.accept(new Message(ev.getMessage().getAuthor().getDisplayName(ev.getGuild()), ev.getMessage().getContent()));
+			}
 		};
 		//register the listener
 		client.getDispatcher().registerListener(listener);
