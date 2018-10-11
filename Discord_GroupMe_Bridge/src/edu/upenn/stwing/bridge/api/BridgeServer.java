@@ -1,4 +1,4 @@
-package edu.upenn.stwing.bridge;
+package edu.upenn.stwing.bridge.api;
 
 import javax.servlet.Servlet;
 
@@ -32,7 +32,7 @@ public final class BridgeServer
 	 * Sets the port that the server will be started on, when it starts.
 	 * @param port the port to use
 	 */
-	protected static void setPort(int port)
+	public static void setPort(int port)
 	{
 		serverPort = port;
 	}
@@ -71,7 +71,7 @@ public final class BridgeServer
 	 * If the server has been initialized by registering a servlet, starts the server.
 	 * Otherwise, does nothing.
 	 */
-	protected static void start()
+	public static void start()
 	{
 		if(server != null)
 		{

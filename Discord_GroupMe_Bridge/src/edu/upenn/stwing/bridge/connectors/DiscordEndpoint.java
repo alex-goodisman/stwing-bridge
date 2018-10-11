@@ -18,9 +18,9 @@ import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedE
 public class DiscordEndpoint implements BridgeEndpoint
 {
 	/** The unique identifying token for this bot */
-	private static final String BOT_TOKEN = "NDY4MjM2NTM2MTUyOTgxNTA0.Di2OzQ.tFRuLPjeKyYDMrHfYpcFu1h3akk";
+	private String botToken;
 	/** The ID of the channel to post to */
-	private static final long CHANNEL_ID = 468611919025012746L;
+	private long channelID;
 	
 	/** Instance object for the discord client, used for posting messages */
 	private IDiscordClient client;
@@ -28,11 +28,14 @@ public class DiscordEndpoint implements BridgeEndpoint
 	/**
 	 * Constructs a DiscordEndpoint and connects to the STWing channel.
 	 */
-	public DiscordEndpoint()
+	public DiscordEndpoint(String botToken, long channelID)
 	{
+		this.botToken = botToken;
+		this.channelID = channelID;
+		
 		//initialize the client object
 		ClientBuilder clientBuilder = new ClientBuilder();
-        clientBuilder.withToken(BOT_TOKEN);
+        clientBuilder.withToken(this.botToken);
         client = clientBuilder.build();
         
         //login
@@ -67,7 +70,7 @@ public class DiscordEndpoint implements BridgeEndpoint
 		RequestBuffer.request(() -> 
 		{
 			//actually send the message
-			client.getChannelByID(CHANNEL_ID).sendMessage(message.toString());
+			client.getChannelByID(channelID).sendMessage(message.toString());
 			System.out.println("Message Sent");
 		});
 	}
@@ -82,7 +85,7 @@ public class DiscordEndpoint implements BridgeEndpoint
 		//create a discord Listener object that responds to Discord Events
 		IListener<MessageReceivedEvent> listener = ev -> 
 		{
-			if(ev.getChannel().getLongID() == CHANNEL_ID)
+			if(ev.getChannel().getLongID() == channelID)
 			{
 				System.out.println("Receiving message from Discord");
 				response.accept(new Message(ev.getMessage().getAuthor().getDisplayName(ev.getGuild()), ev.getMessage().getContent()));
