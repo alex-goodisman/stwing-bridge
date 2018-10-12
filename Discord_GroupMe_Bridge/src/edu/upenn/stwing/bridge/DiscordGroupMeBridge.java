@@ -42,15 +42,20 @@ public class DiscordGroupMeBridge
 	 * and dispatches command-line input to both outputs
 	 */
 	private void startBridge()
-	{
-		discord.onMessageReceived(groupMe::sendMessage);
+	{	
+		//mirror both groupmes on to discord
 		groupMe.onMessageReceived(discord::sendMessage);
-		
-		discord.onMessageReceived(groupMeNew::sendMessage);
 		groupMeNew.onMessageReceived(discord::sendMessage);
 		
+		//mirror discord onto both groupmes
+		discord.onMessageReceived(groupMe::sendMessage);
+		discord.onMessageReceived(groupMeNew::sendMessage);
+		
+		//mirror console onto all
 		console.onMessageReceived(discord::sendMessage);
 		console.onMessageReceived(groupMe::sendMessage);
+		console.onMessageReceived(groupMeNew::sendMessage);
+		
 		System.out.println("Starting Bridge");
 	}
 	
