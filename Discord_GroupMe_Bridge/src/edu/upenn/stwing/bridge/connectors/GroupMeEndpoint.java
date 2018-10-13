@@ -17,8 +17,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import edu.upenn.stwing.bridge.BridgeServer;
 import edu.upenn.stwing.bridge.api.BridgeEndpoint;
+import edu.upenn.stwing.bridge.api.BridgeServer;
 import edu.upenn.stwing.bridge.api.Message;
 
 /**
@@ -29,9 +29,11 @@ import edu.upenn.stwing.bridge.api.Message;
 public class GroupMeEndpoint implements BridgeEndpoint
 {
 	/** The unique identifying token for this bot */
-	private static final String BOT_ID = "37b4147a5eeb53138376644ec7";
+	private String botID;
 	/** The user ID for this bot in this group, used to detect its own messages */
-	private static final String BOT_USER_ID = "660903";
+	private String botUserID;
+	/** The URL path element for this servlet */
+	private String servletName;
 	/** The entry point for all GroupMe bots */
 	private static final String GROUPME_API_URL = "https://api.groupme.com/v3/bots/post";
 	
@@ -42,13 +44,17 @@ public class GroupMeEndpoint implements BridgeEndpoint
 	  * Constructs a new GroupMe Endpoint and adds a GroupMe monitoring servlet to the
 	  * singleton Bridge server
 	  */
-	public GroupMeEndpoint()
+	public GroupMeEndpoint(String botID, String botUserID, String servletName)
 	{
+		this.botID = botID;
+		this.botUserID = botUserID;
+		this.servletName = servletName;
+		
 		//initialize
 		listeners = new ArrayList<>();
 		
 		//add to the server under the /GroupMe path
-		BridgeServer.addServlet(this.new GroupMeMonitorServlet(), "/GroupMe/*");
+		BridgeServer.addServlet(this.new GroupMeMonitorServlet(), "/"+this.servletName+"/*");
         System.out.println("Initializing GroupMe Endpoint");
 	}
 	
@@ -63,7 +69,7 @@ public class GroupMeEndpoint implements BridgeEndpoint
 		{
 			//create the JSON representation of the message
 			JSONObject jsonObject = new JSONObject();
-			jsonObject.put("bot_id", BOT_ID);
+			jsonObject.put("bot_id", botID);
 			jsonObject.put("text", message.toString());
 			
 			//connect to GroupMe API
@@ -150,7 +156,7 @@ public class GroupMeEndpoint implements BridgeEndpoint
 				String name = jsonObject.getString("name");
 				String text = jsonObject.getString("text");
 				//screen out messages that this bot itself sent, so that it doesn't mirror its own messages
-				if(!(jsonObject.getString("sender_type").equals("bot") && jsonObject.getString("sender_id").equals(BOT_USER_ID)))
+				if(!(jsonObject.getString("sender_type").equals("bot") && jsonObject.getString("sender_id").equals(botUserID)))
 					message = new Message(name,text);
 				else
 					System.out.println("Dismissing a message from this bot to itself");

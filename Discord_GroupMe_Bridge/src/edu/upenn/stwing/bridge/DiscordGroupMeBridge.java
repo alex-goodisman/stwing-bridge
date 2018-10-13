@@ -1,9 +1,12 @@
 package edu.upenn.stwing.bridge;
 
 import edu.upenn.stwing.bridge.api.BridgeEndpoint;
+import edu.upenn.stwing.bridge.api.BridgeServer;
 import edu.upenn.stwing.bridge.connectors.ConsoleEndpoint;
 import edu.upenn.stwing.bridge.connectors.DiscordEndpoint;
 import edu.upenn.stwing.bridge.connectors.GroupMeEndpoint;
+
+import static edu.upenn.stwing.bridge.STWingConstants.*;
 
 /**
  * Manages the connection between all the different endpoints.
@@ -17,6 +20,8 @@ public class DiscordGroupMeBridge
 	private BridgeEndpoint discord;
 	/** The endpoint for TranscriberBot in the STWing GroupMe */
 	private BridgeEndpoint groupMe;
+	/** The endpoint for TranscriberBot in the new STWing GroupMe */
+	private BridgeEndpoint groupMeNew;
 	/** The endpoint for the command line */
 	private ConsoleEndpoint console;
 	
@@ -25,8 +30,9 @@ public class DiscordGroupMeBridge
 	 */
 	public DiscordGroupMeBridge()
 	{
-		discord = new DiscordEndpoint();
-		groupMe = new GroupMeEndpoint();
+		discord = new DiscordEndpoint(DISCORD_BOT_TOKEN, DISCORD_CHANNEL_ID);
+		groupMe = new GroupMeEndpoint(GROUPME_OLD_BOT_ID, GROUPME_OLD_USER_ID, GROUPME_SERVLET_1);
+		groupMeNew = new GroupMeEndpoint(GROUPME_NEW_BOT_ID, GROUPME_NEW_USER_ID, GROUPME_SERVLET_2);
 		console = new ConsoleEndpoint();
 	}
 	
@@ -36,12 +42,20 @@ public class DiscordGroupMeBridge
 	 * and dispatches command-line input to both outputs
 	 */
 	private void startBridge()
-	{
-		discord.onMessageReceived(groupMe::sendMessage);
+	{	
+		//mirror both groupmes on to discord
 		groupMe.onMessageReceived(discord::sendMessage);
+		groupMeNew.onMessageReceived(discord::sendMessage);
 		
+		//mirror discord onto both groupmes
+		discord.onMessageReceived(groupMe::sendMessage);
+		discord.onMessageReceived(groupMeNew::sendMessage);
+		
+		//mirror console onto all
 		console.onMessageReceived(discord::sendMessage);
 		console.onMessageReceived(groupMe::sendMessage);
+		console.onMessageReceived(groupMeNew::sendMessage);
+		
 		System.out.println("Starting Bridge");
 	}
 	
