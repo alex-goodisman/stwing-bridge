@@ -48,7 +48,10 @@ public class DiscordGroupMeBridge
 		groupMeNew.onMessageReceived(discord::sendMessage);
 		
 		//mirror discord onto both groupmes
-		discord.onMessageReceived(groupMe::sendMessage);
+		
+		//Don't send messages back to the old GroupMe
+		//discord.onMessageReceived(groupMe::sendMessage);
+		
 		discord.onMessageReceived(groupMeNew::sendMessage);
 		
 		//mirror console onto all
