@@ -7,6 +7,7 @@ import edu.upenn.stwing.bridge.api.Message;
 import sx.blah.discord.api.ClientBuilder;
 import sx.blah.discord.api.IDiscordClient;
 import sx.blah.discord.api.events.IListener;
+import sx.blah.discord.util.EmbedBuilder;
 import sx.blah.discord.util.RequestBuffer;
 import sx.blah.discord.handle.impl.events.guild.channel.message.MessageReceivedEvent;
 
@@ -69,8 +70,15 @@ public class DiscordEndpoint implements BridgeEndpoint
 		//request that the message be sent as soon as the buffer is empty
 		RequestBuffer.request(() -> 
 		{
-			//actually send the message
-			client.getChannelByID(channelID).sendMessage(message.toString());
+			String image = message.getImage();
+			if(image != null)
+			{
+				EmbedBuilder b = new EmbedBuilder();
+				b.withImage(image);
+				client.getChannelByID(channelID).sendMessage(message.toString(), b.build());
+			}
+			else
+				client.getChannelByID(channelID).sendMessage(message.toString());
 			System.out.println("Message Sent");
 		});
 	}
@@ -87,8 +95,14 @@ public class DiscordEndpoint implements BridgeEndpoint
 		{
 			if(ev.getChannel().getLongID() == channelID)
 			{
-				System.out.println("Receiving message from Discord");
-				response.accept(new Message(ev.getMessage().getAuthor().getDisplayName(ev.getGuild()), ev.getMessage().getContent()));
+				Message message = null;
+				String name = ev.getMessage().getAuthor().getDisplayName(ev.getGuild());
+				String text = ev.getMessage().getContent();
+				if(ev.getMessage().getAttachments().size() > 0)
+					message = new Message(name,text,ev.getMessage().getAttachments().get(0).getUrl());
+				else
+					message = new Message(name,text);
+				response.accept(message);
 			}
 		};
 		//register the listener

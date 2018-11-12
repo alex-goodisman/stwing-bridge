@@ -18,6 +18,9 @@ public class STWingConstants
 	
 	/** The STWing Discord's Mirror Channel ID */
 	public static long DISCORD_CHANNEL_ID = 468611919025012746L;
+	
+	/** GroupMe Access Token (for accessing Image API) - burner account */
+	public static String GROUPME_ACCESS_TOKEN = "XQTJjbUGbj1Jh69bT14KxmWqkR2CCMtnjab4JmNQ";
 		
 	/** GroupMe Bot ID for the old GroupMe */
 	public static String GROUPME_OLD_BOT_ID = "37b4147a5eeb53138376644ec7";

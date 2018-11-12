@@ -3,7 +3,9 @@ package edu.upenn.stwing.bridge.connectors;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,9 +16,11 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import edu.upenn.stwing.bridge.STWingConstants;
 import edu.upenn.stwing.bridge.api.BridgeEndpoint;
 import edu.upenn.stwing.bridge.api.BridgeServer;
 import edu.upenn.stwing.bridge.api.Message;
@@ -71,6 +75,19 @@ public class GroupMeEndpoint implements BridgeEndpoint
 			JSONObject jsonObject = new JSONObject();
 			jsonObject.put("bot_id", botID);
 			jsonObject.put("text", message.toString());
+			if(message.getImage() != null)
+			{
+				String processed = processImageForGroupMe(message.getImage());
+				if(processed != null)
+				{
+					JSONObject image = new JSONObject();
+					image.put("type", "image");
+					image.put("url", processed);
+					JSONArray arr = new JSONArray();
+					arr.put(image);
+					jsonObject.put("attachments", arr);
+				}
+			}
 			
 			//connect to GroupMe API
 			URL obj = new URL(GROUPME_API_URL);
@@ -112,6 +129,63 @@ public class GroupMeEndpoint implements BridgeEndpoint
 	public void onMessageReceived(Consumer<Message> response)
 	{
 		listeners.add(response);
+	}
+	
+	private static String processImageForGroupMe(String imageURL)
+	{
+		try
+		{
+			
+			HttpsURLConnection connection = (HttpsURLConnection) (new URL(imageURL).openConnection());
+	        connection.setRequestMethod("GET");
+	                connection.setRequestProperty(
+	                        "User-Agent",
+	                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36");
+	        
+	        String contentType = connection.getContentType();
+	        InputStream is = connection.getInputStream();
+	        
+	        URL serviceURL = new URL("https://image.groupme.com/pictures");
+	        HttpsURLConnection service = (HttpsURLConnection)serviceURL.openConnection();
+	        service.setRequestMethod("POST");
+	        service.setRequestProperty("X-Access-Token",STWingConstants.GROUPME_ACCESS_TOKEN);
+	        service.setRequestProperty("Content-Type",contentType);
+	        service.setDoOutput(true);
+	        OutputStream os = service.getOutputStream();
+	        
+
+	        byte[] buffer = new byte[1024];
+	        int len;
+	        while ((len = is.read(buffer)) != -1) {
+	            os.write(buffer, 0, len);
+	        }
+	        
+	        
+	        is.close();
+	        os.close();
+	        
+
+			StringBuffer jb = new StringBuffer();
+			BufferedReader reader = new BufferedReader(new InputStreamReader(service.getInputStream()));
+			
+			String line = null;
+			
+			while ((line = reader.readLine()) != null)
+			{
+				jb.append(line);
+			}
+
+			reader.close();
+			
+			JSONObject jsonObject =  new JSONObject(jb.toString());
+			JSONObject payload = jsonObject.getJSONObject("payload");
+			return payload.getString("url");
+		}
+		catch(IOException ex)
+		{
+			return null;
+		}
+		
 	}
 	
 	/**
@@ -157,7 +231,20 @@ public class GroupMeEndpoint implements BridgeEndpoint
 				String text = jsonObject.getString("text");
 				//screen out messages that this bot itself sent, so that it doesn't mirror its own messages
 				if(!(jsonObject.getString("sender_type").equals("bot") && jsonObject.getString("sender_id").equals(botUserID)))
-					message = new Message(name,text);
+				{
+					JSONArray attachments = jsonObject.getJSONArray("attachments");
+					for(int i = 0, l = attachments.length(); i < l;i++)
+					{
+						JSONObject att = attachments.getJSONObject(i);
+						if(att.getString("type").equals("image"))
+						{
+							message = new Message(name,text,att.getString("url"));
+							break;
+						}
+					}
+					if(message == null)
+						message = new Message(name,text);
+				}
 				else
 					System.out.println("Dismissing a message from this bot to itself");
 			}

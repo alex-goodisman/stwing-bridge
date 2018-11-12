@@ -13,6 +13,8 @@ public class Message
 	private String text;
 	/** The name of whoever posted the message */
 	private String sender;
+	/** URL of image attached to message, null if no image */
+	private String image;
 	
 	/** 
 	 * Constructs a message from component data
@@ -21,8 +23,25 @@ public class Message
 	 */
 	public Message(String sender, String text)
 	{
+		this(sender,text,null);
+	}
+	
+	/**
+	 * Constructs a message from component data with an attached image
+	 * @param sender The author of the message
+	 * @param text The text content of the message
+	 * @param image the attached image URL
+	 */
+	public Message(String sender, String text, String image)
+	{
 		this.text = text;
 		this.sender = sender;
+		this.image = image;
+	}
+	
+	public String getImage()
+	{
+		return image;
 	}
 	
 	/**
